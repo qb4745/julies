@@ -75,4 +75,10 @@ export class ProductsConsumedService {
   getProductsConsumed() {
     return this.prodConsumedSubject.asObservable();
   }
+
+  updateProductsConsumed(productsConsumed: ProductsConsumedDoc) {
+    this.dbService.db.put(productsConsumed).catch((err:any) => {
+      console.error(err);
+    });
+  }
 }
