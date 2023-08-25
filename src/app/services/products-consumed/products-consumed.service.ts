@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, Subscription, catchError, from, map, of, take } from 'rxjs';
 import { ProductsConsumedDoc } from 'src/app/model/productsConsumed';
 import { DbService } from '../db/db.service';
-import { TableDoc } from 'src/app/model/table';
 
 @Injectable({
   providedIn: 'root'
@@ -10,18 +9,23 @@ import { TableDoc } from 'src/app/model/table';
 export class ProductsConsumedService {
   prodConsumedSubject: BehaviorSubject<Array<ProductsConsumedDoc>> = new BehaviorSubject(new Array<ProductsConsumedDoc>());
   subscriptions: Array<Subscription> = [];
+  tableIdSubject: BehaviorSubject<string> = new BehaviorSubject<string>("");
+
 
   constructor(private dbService: DbService) {
-    this.initChangeHandler();
+    let s = this.tableIdSubject.subscribe((tableId) => {
+      this.initChangeHandler(tableId);
+      this.fetchProductsConsumed(tableId);
+    });
   }
 
-  initChangeHandler() {
+  initChangeHandler(tableId: string) {
     let sub = this.dbService.getCurrentConsumedProductChanges()
       .subscribe((changedDoc: ProductsConsumedDoc) => {
         if (changedDoc) {
           console.warn('handleChange called from TableService');
           this.dbService.handleChange(this.prodConsumedSubject, changedDoc, () => {
-          this.fetchProductsConsumed();
+          this.fetchProductsConsumed(tableId);
           });
 
 
@@ -34,11 +38,18 @@ export class ProductsConsumedService {
     this.subscriptions.forEach(s => s.unsubscribe());
   }
 
-  fetchProductsConsumed() {
+  setTableId(tableId: string) {
+    if (tableId === undefined || tableId === null || tableId === "") return;
+    this.tableIdSubject.next(tableId);
+  }
+
+
+  fetchProductsConsumed(tableId: string) {
     console.error('fetchProductsConsumed called');
     let query = {
       selector: {
         type: 'products-consumed',
+        table: `${tableId}`
       },
       fields: ['_id', '_rev', 'type', 'table', 'products'],
       execution_stats: true,

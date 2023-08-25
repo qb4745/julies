@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import PouchDB from 'pouchdb';
 import PouchDBFind from 'pouchdb-find';
 import { BehaviorSubject, Subject } from 'rxjs';
+import { ProductsDoc } from 'src/app/model/products';
 import { ProductsConsumedDoc } from 'src/app/model/productsConsumed';
 import { TableDoc } from 'src/app/model/table';
 
@@ -14,6 +15,7 @@ export class DbService {
 
   _tablesSubject = new Subject<TableDoc>();
   _prodConsumedSubject = new Subject<ProductsConsumedDoc>();
+  _productsSubject = new Subject<ProductsDoc>();
 
   constructor() {
     PouchDB.plugin(PouchDBFind);
@@ -32,17 +34,22 @@ export class DbService {
       live: true,
       include_docs: true
     }).on('change', (change: any) => {
+      console.warn(change.doc);
       if (change.doc.type === 'table') {
         console.warn('Change detected on table document');
-        console.warn(change.doc);
         this._tablesSubject.next(change.doc);
-      }
-      else if (change.doc.type === 'products-consumed') {
+      } else if (change.doc.type === 'products-consumed') {
         console.warn('Change detected on products consumed document');
-        console.warn(change.doc);
         this._prodConsumedSubject.next(change.doc);
+      } else if (change.doc.type === 'products') {
+        console.warn('Change detected on products document');
+        this._productsSubject.next(change.doc);
       }
     });
+  }
+
+  getAllProductChanges() {
+    return this._productsSubject.asObservable();
   }
 
   getCurrentTableChanges() {

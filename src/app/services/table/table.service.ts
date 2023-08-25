@@ -13,6 +13,7 @@ export class TableService {
 
   constructor(private dbService: DbService) {
     this.initChangeHandler();
+    this.fetchTables();
   }
 
   initChangeHandler() {
